@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-CAN模拟器客户端 - 用于测试和调试
-连接到模拟器并实时显示接收的数据
+CAN模擬器客戶端 - 用於測試和除錯
+連線到模擬器並实时顯示接收的資料
 """
 
 import socket
@@ -17,31 +17,31 @@ class CANClient:
         self.socket = None
     
     def connect(self):
-        """连接到CAN模拟器"""
+        """連線到CAN模擬器"""
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.connect((self.host, self.port))
-            print(f"✅ 已连接到 {self.host}:{self.port}")
+            print(f"✅ 已連線到 {self.host}:{self.port}")
             return True
         except Exception as e:
-            print(f"❌ 连接失败: {e}")
+            print(f"❌ 連線失敗: {e}")
             return False
     
     def receive_messages(self):
-        """接收并显示CAN消息"""
+        """接收並顯示CAN訊息"""
         buffer = ""
         
         try:
             while True:
-                # 接收数据
+                # 接收資料
                 data = self.socket.recv(4096).decode('utf-8')
                 if not data:
-                    print("❌ 连接已关闭")
+                    print("❌ 連線已關閉")
                     break
                 
                 buffer += data
                 
-                # 处理完整的JSON行
+                # 處理完整的JSON行
                 while '\n' in buffer:
                     line, buffer = buffer.split('\n', 1)
                     if line.strip():
@@ -50,12 +50,12 @@ class CANClient:
         except KeyboardInterrupt:
             print("\n👋 停止接收")
         except Exception as e:
-            print(f"❌ 接收错误: {e}")
+            print(f"❌ 接收錯誤: {e}")
         finally:
             self.close()
     
     def _process_message(self, json_line: str):
-        """处理单条消息"""
+        """處理單筆訊息"""
         try:
             data = json.loads(json_line)
             timestamp = datetime.fromtimestamp(data['timestamp']).strftime('%H:%M:%S.%f')[:-3]
@@ -78,25 +78,25 @@ class CANClient:
                     print(f"  {signal_name:<25} = {value_str}{unit_str}")
         
         except json.JSONDecodeError:
-            print(f"❌ JSON解析错误: {json_line[:100]}")
+            print(f"❌ JSON解析錯誤: {json_line[:100]}")
         except Exception as e:
-            print(f"❌ 处理错误: {e}")
+            print(f"❌ 處理錯誤: {e}")
     
     def close(self):
-        """关闭连接"""
+        """關閉連線"""
         if self.socket:
             self.socket.close()
-            print("✅ 连接已关闭")
+            print("✅ 連線已關閉")
 
 
 def main():
-    print("🚗 CAN模拟器客户端")
+    print("🚗 CAN模擬器客戶端")
     print("-" * 40)
     
     client = CANClient()
     
     if client.connect():
-        print("\n💡 数据格式: JSON (消息 -> 信号 -> 值+单位)")
+        print("\n💡 資料格式: JSON (訊息 -> 訊號 -> 值+单位)")
         print("💡 按 Ctrl+C 停止接收\n")
         client.receive_messages()
 

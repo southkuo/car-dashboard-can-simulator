@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-完整测试脚本 - 验证CAN模拟器的所有功能
-测试: DBC加载、编码/解码、信号仿真、TCP通信
+完整測試腳本 - 驗證CAN模擬器的所有功能
+測試: DBC載入、編碼/解碼、訊號模擬、TCP通訊
 """
 
 import subprocess
@@ -32,63 +32,63 @@ class TestRunner:
             print(f"  ❌ {message}")
     
     def test_dbc_file(self):
-        """测试1: DBC文件存在且有效"""
-        self.print_header("测试1: DBC文件验证")
+        """測試1: DBC文件存在且有效"""
+        self.print_header("測試1: DBC文件驗證")
         
         dbc_file = self.base_path / 'Dashboard.dbc'
         self.assert_true(dbc_file.exists(), f"DBC文件存在: {dbc_file}")
         
-        # 尝试加载DBC
+        # 嘗試載入DBC
         try:
             import cantools
             db = cantools.database.load_file(str(dbc_file))
-            self.assert_true(True, f"DBC文件格式有效 ({len(db.messages)} 条消息)")
+            self.assert_true(True, f"DBC文件格式有效 ({len(db.messages)} 條訊息)")
             
-            # 检查期望的消息
+            # 檢查期望的訊息
             expected_msgs = ['EngineStatus', 'VehicleStatus', 'WarningLights']
             for msg_name in expected_msgs:
                 msg = db.get_message_by_name(msg_name)
-                self.assert_true(msg is not None, f"存在消息: {msg_name}")
+                self.assert_true(msg is not None, f"存在訊息: {msg_name}")
         
         except ImportError:
-            self.assert_true(False, "cantools库未安装")
+            self.assert_true(False, "cantools庫未安裝")
         except Exception as e:
-            self.assert_true(False, f"DBC加载失败: {e}")
+            self.assert_true(False, f"DBC載入失敗: {e}")
     
     def test_can_simulator_startup(self):
-        """测试2: CAN模拟器能否启动"""
-        self.print_header("测试2: CAN模拟器启动测试")
+        """測試2: CAN模擬器能否啟動"""
+        self.print_header("測試2: CAN模擬器啟動測試")
         
         simulator_file = self.base_path / 'can_simulator.py'
-        self.assert_true(simulator_file.exists(), f"模拟器脚本存在: {simulator_file}")
+        self.assert_true(simulator_file.exists(), f"模擬器腳本存在: {simulator_file}")
         
-        # 检查导入
+        # 檢查匯入
         try:
             import can_simulator
-            self.assert_true(True, "can_simulator.py 可以导入")
+            self.assert_true(True, "can_simulator.py 可以匯入")
             
-            # 检查CANSimulator类
+            # 檢查CANSimulator类
             self.assert_true(
                 hasattr(can_simulator, 'CANSimulator'),
                 "CANSimulator 类存在"
             )
         except ImportError as e:
-            self.assert_true(False, f"导入失败: {e}")
+            self.assert_true(False, f"匯入失敗: {e}")
     
     def test_tcp_connection(self):
-        """测试3: TCP连接和数据接收"""
-        self.print_header("测试3: TCP连接测试 (快速)")
+        """測試3: TCP連線和資料接收"""
+        self.print_header("測試3: TCP連線測試 (快速)")
         
-        # 尝试连接到localhost:9999
+        # 嘗試連線到localhost:9999
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(2)
         
         try:
             result = sock.connect_ex(('127.0.0.1', 9999))
             if result == 0:
-                self.assert_true(True, "TCP服务器在运行 (127.0.0.1:9999)")
+                self.assert_true(True, "TCP服务器在執行 (127.0.0.1:9999)")
                 
-                # 尝试接收一条消息
+                # 嘗試接收一條訊息
                 sock.settimeout(2)
                 data = sock.recv(4096)
                 
@@ -97,27 +97,27 @@ class TestRunner:
                         json_data = json.loads(data.decode('utf-8').strip())
                         self.assert_true(
                             'timestamp' in json_data and 'messages' in json_data,
-                            "接收到有效的JSON数据"
+                            "接收到有效的JSON資料"
                         )
                         self.assert_true(
                             'EngineStatus' in json_data['messages'],
-                            "消息包含 EngineStatus"
+                            "訊息包含 EngineStatus"
                         )
                     except json.JSONDecodeError:
-                        self.assert_true(False, "接收到的数据不是有效JSON")
+                        self.assert_true(False, "接收到的資料不是有效JSON")
                 else:
-                    self.assert_true(False, "未能接收数据")
+                    self.assert_true(False, "未能接收資料")
             else:
-                self.assert_true(False, "TCP服务器未在运行 - 请先启动模拟器")
+                self.assert_true(False, "TCP服务器未在執行 - 請先啟動模擬器")
         
         except (socket.timeout, ConnectionRefusedError):
-            self.assert_true(False, "无法连接到TCP服务器 - 请先启动模拟器")
+            self.assert_true(False, "无法連線到TCP服务器 - 請先啟動模擬器")
         finally:
             sock.close()
     
     def test_signal_decoding(self):
-        """测试4: 信号编码和解码"""
-        self.print_header("测试4: 信号编解码测试")
+        """測試4: 訊號編碼和解碼"""
+        self.print_header("測試4: 訊號编解碼測試")
         
         try:
             import cantools
@@ -125,11 +125,11 @@ class TestRunner:
             dbc_file = self.base_path / 'Dashboard.dbc'
             db = cantools.database.load_file(str(dbc_file))
             
-            # 获取EngineStatus消息
+            # 取得EngineStatus訊息
             msg = db.get_message_by_name('EngineStatus')
-            self.assert_true(msg is not None, "可以获取 EngineStatus 消息")
+            self.assert_true(msg is not None, "可以取得 EngineStatus 訊息")
             
-            # 测试编码
+            # 測試編碼
             signals = {
                 'EngineRPM': 1500,
                 'EngineTemp': 85,
@@ -138,47 +138,47 @@ class TestRunner:
             }
             
             encoded = msg.encode(signals)
-            self.assert_true(len(encoded) > 0, f"信号编码成功 ({len(encoded)} 字节)")
+            self.assert_true(len(encoded) > 0, f"訊號編碼成功 ({len(encoded)} 字节)")
             
-            # 测试解码
+            # 測試解碼
             decoded = msg.decode(encoded)
-            self.assert_true(decoded is not None, "信号解码成功")
+            self.assert_true(decoded is not None, "訊號解碼成功")
             
-            # 验证值
+            # 驗證值
             rpm_match = abs(decoded['EngineRPM'] - 1500) < 1
-            self.assert_true(rpm_match, f"RPM值正确 (编码: 1500, 解码: {decoded['EngineRPM']:.1f})")
+            self.assert_true(rpm_match, f"RPM值正確 (編碼: 1500, 解碼: {decoded['EngineRPM']:.1f})")
             
             temp_match = abs(decoded['EngineTemp'] - 85) < 1
-            self.assert_true(temp_match, f"温度值正确 (编码: 85, 解码: {decoded['EngineTemp']:.1f})")
+            self.assert_true(temp_match, f"溫度值正確 (編碼: 85, 解碼: {decoded['EngineTemp']:.1f})")
         
         except Exception as e:
-            self.assert_true(False, f"编解码测试失败: {e}")
+            self.assert_true(False, f"编解碼測試失敗: {e}")
     
     def test_client_script(self):
-        """测试5: 客户端脚本"""
-        self.print_header("测试5: 客户端脚本验证")
+        """測試5: 客戶端腳本"""
+        self.print_header("測試5: 客戶端腳本驗證")
         
         client_file = self.base_path / 'can_client.py'
-        self.assert_true(client_file.exists(), f"客户端脚本存在: {client_file}")
+        self.assert_true(client_file.exists(), f"客戶端腳本存在: {client_file}")
         
         try:
             import can_client
-            self.assert_true(True, "can_client.py 可以导入")
+            self.assert_true(True, "can_client.py 可以匯入")
             self.assert_true(
                 hasattr(can_client, 'CANClient'),
                 "CANClient 类存在"
             )
         except ImportError as e:
-            self.assert_true(False, f"导入失败: {e}")
+            self.assert_true(False, f"匯入失敗: {e}")
     
     def test_analyzer_script(self):
-        """测试6: 分析器脚本"""
-        self.print_header("测试6: DBC分析脚本验证")
+        """測試6: 分析器腳本"""
+        self.print_header("測試6: DBC分析腳本驗證")
         
         analyzer_file = self.base_path / 'dbc_analyzer.py'
-        self.assert_true(analyzer_file.exists(), f"分析脚本存在: {analyzer_file}")
+        self.assert_true(analyzer_file.exists(), f"分析腳本存在: {analyzer_file}")
         
-        # 检查脚本可执行性
+        # 檢查腳本可執行性
         try:
             result = subprocess.run(
                 ['python3', str(analyzer_file)],
@@ -187,17 +187,17 @@ class TestRunner:
                 text=True
             )
             self.assert_true(
-                'DBC文件详细分析' in result.stdout or result.returncode == 0,
-                "分析脚本可以正常执行"
+                'DBC文件詳細分析' in result.stdout or result.returncode == 0,
+                "分析腳本可以正常執行"
             )
         except subprocess.TimeoutExpired:
-            self.assert_true(False, "分析脚本执行超时")
+            self.assert_true(False, "分析腳本執行逾時")
         except Exception as e:
-            self.assert_true(False, f"脚本执行失败: {e}")
+            self.assert_true(False, f"腳本执行失敗: {e}")
     
     def test_python_dependencies(self):
-        """测试7: Python依赖检查"""
-        self.print_header("测试7: Python依赖检查")
+        """測試7: Python依賴檢查"""
+        self.print_header("測試7: Python依賴檢查")
         
         required_packages = {
             'cantools': 'CAN DBC解析',
@@ -211,9 +211,9 @@ class TestRunner:
                 self.assert_true(False, f"{package} ({description})")
     
     def run_all_tests(self):
-        """运行所有测试"""
+        """執行所有測試"""
         print("\n" + "="*70)
-        print("🧪 车用仪表板 CAN模拟器 - 完整测试")
+        print("🧪 車用儀表板 CAN模擬器 - 完整測試")
         print("="*70)
         
         self.test_python_dependencies()
@@ -223,28 +223,28 @@ class TestRunner:
         self.test_client_script()
         self.test_analyzer_script()
         
-        # 只有在模拟器运行时才测试TCP
+        # 只有在模擬器執行时才測試TCP
         print(f"\n{'='*70}")
-        print("✓ 可选测试: TCP连接 (需要模拟器正在运行)")
+        print("✓ 可选測試: TCP連線 (需要模擬器正在執行)")
         print(f"{'='*70}")
         self.test_tcp_connection()
         
-        # 总结
+        # 總結
         print(f"\n{'='*70}")
-        print("📊 测试结果总结")
+        print("📊 測試結果總結")
         print(f"{'='*70}")
-        print(f"\n  ✅ 通过: {self.passed}")
-        print(f"  ❌ 失败: {self.failed}")
-        print(f"  📈 通过率: {self.passed/(self.passed+self.failed)*100:.1f}%\n")
+        print(f"\n  ✅ 通過: {self.passed}")
+        print(f"  ❌ 失敗: {self.failed}")
+        print(f"  📈 通過率: {self.passed/(self.passed+self.failed)*100:.1f}%\n")
         
         if self.failed == 0:
-            print("  🎉 所有测试通过！系统已准备就绪。")
+            print("  🎉 所有測試通過！系統已准备就緒。")
             print("\n  下一步:")
-            print("    1. 启动模拟器:  python3 can_simulator.py")
-            print("    2. 启动客户端:  python3 can_client.py")
+            print("    1. 啟動模擬器:  python3 can_simulator.py")
+            print("    2. 啟動客戶端:  python3 can_client.py")
             return True
         else:
-            print(f"  ⚠️  有 {self.failed} 项测试失败。请检查上述错误。")
+            print(f"  ⚠️  有 {self.failed} 項測試失敗。請檢查上述錯誤。")
             return False
 
 
